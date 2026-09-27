@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PayFlex Wallet Dashboard</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- React & Babel CDNs -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            emeraldPrimary: '#10B981',
+            emeraldDark: '#047857',
+            emeraldLight: '#D1FAE5',
+            sendPurple: '#7C3AED',
+            sendPurpleLight: '#F3E8FF',
+            oceanBlue: '#0284C7',
+            oceanBlueLight: '#E0F2FE',
+            amberReward: '#F59E0B',
+            amberRewardLight: '#FEF3C7',
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-gray-100 flex justify-center items-start min-h-screen p-0 sm:p-4">
+
+  <!-- Mobile Container Root -->
+  <div id="root" class="w-full max-w-md bg-slate-50 min-h-screen sm:min-h-[844px] shadow-2xl relative overflow-hidden sm:rounded-3xl border border-gray-200"></div>
+
+  <script type="text/babel">
+    const { useState } = React;
+
+    const initialTransactions = [
+      { id: 1, type: "SEND_MONEY", title: "Send Money (Mom)", number: "01711223344", amount: 500.0, time: "Today, 02:45 PM", status: "SUCCESS", trxId: "SND64829103" },
+      { id: 2, type: "RECHARGE", title: "Grameenphone Recharge", number: "01711223344", amount: 250.0, time: "Yesterday, 04:30 PM", status: "SUCCESS", trxId: "REC73918231" },
+      { id: 3, type: "ADD_MONEY", title: "Add Money (bKash)", number: "01712345678", amount: 1500.0, time: "25 Sep, 11:15 AM", status: "SUCCESS", trxId: "BKA92817264" },
+    ];
+
+    const quickContacts = [
+      { name: "Mom", phone: "01711223344" },
+      { name: "Rahim", phone: "01819283746" },
+      { name: "Office", phone: "01998877665" },
+      { name: "Tanha", phone: "01622334455" }
+    ];
+
+    function PayFlexDashboard() {
+      const [balance, setBalance] = useState(2450.75);
+      const [showBalance, setShowBalance] = useState(true);
+      const [filter, setFilter] = useState("ALL");
+      const [transactions, setTransactions] = useState(initialTransactions);
+      const [activeModal, setActiveModal] = useState(null); // 'ADD_MONEY' | 'SEND_MONEY' | 'RECEIPT'
+      const [selectedTxn, setSelectedTxn] = useState(null);
+
+      // Form states for modals
+      const [sendPhone, setSendPhone] = useState("01711223344");
+      const [sendAmount, setSendAmount] = useState("500");
+      const [addAmount, setAddAmount] = useState("1000");
+      const [addChannel, setAddChannel] = useState("bKash");
+
+      const filteredTxns = transactions.filter(t => {
+        if (filter === "INFLOW") return t.type === "ADD_MONEY";
+        if (filter === "OUTFLOW") return t.type === "SEND_MONEY" || t.type === "RECHARGE";
+        return true;
+      });
+
+      const handleSendMoney = () => {
+        const amt = parseFloat(sendAmount);
+        if (isNaN(amt) || amt <= 0 || amt > balance) {
+          alert("Invalid amount or insufficient balance.");
+          return;
+        }
+        const newTxn = {
+          id: Date.now(),
+          type: "SEND_MONEY",
+          title: `Send Money (${sendPhone})`,
+          number: sendPhone,
+          amount: amt,
+          time: "Just now",
+          status: "SUCCESS",
+          trxId: "SND" + Math.floor(10000000 + Math.random() * 90000000)
+        };
+        setBalance(prev => prev - amt);
+        setTransactions([newTxn, ...transactions]);
+        setActiveModal(null);
+        setSelectedTxn(newTxn);
+      };
+
+      const handleAddMoney = () => {
+        const amt = parseFloat(addAmount);
+        if (isNaN(amt) || amt <= 0) {
+          alert("Invalid amount.");
+          return;
+        }
+        const newTxn = {
+          id: Date.now(),
+          type: "ADD_MONEY",
+          title: `Add Money (${addChannel})`,
+          number: "01712345678",
+          amount: amt,
+          time: "Just now",
+          status: "SUCCESS",
+          trxId: "ADD" + Math.floor(10000000 + Math.random() * 90000000)
+        };
+        setBalance(prev => prev + amt);
+        setTransactions([newTxn, ...transactions]);
+        setActiveModal(null);
+        setSelectedTxn(newTxn);
+      };
+
+      return (
+        <div className="flex flex-col min-h-screen pb-16">
+          {/* Top Bar */}
+          <header className="bg-white px-5 pt-4 pb-3 border-b border-gray-100 flex items-center justify-between sticky top-0 z-20">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-lg shadow-sm">
+                T
+              </div>
+              <div>
+                <h1 className="text-sm font-semibold text-gray-800 leading-tight">PayFlex Wallet</h1>
+                <p className="text-xs text-gray-500">Hello, Tanvir Ahmed</p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="bg-emerald-50 text-emerald-700 text-[11px] font-semibold px-2.5 py-1 rounded-full border border-emerald-200">
+                Verified ✓
+              </span>
+            </div>
+          </header>
+
+          <main className="p-4 space-y-4 flex-1">
+            {/* 1. Digital Wallet Balance Card */}
+            <div className="rounded-2xl p-5 text-white shadow-lg bg-gradient-to-br from-emerald-600 via-teal-700 to-emerald-900 relative overflow-hidden">
+              <div className="absolute -right-6 -bottom-6 w-32 h-32 rounded-full bg-white/10 pointer-events-none"></div>
+
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-2">
+                  <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
+                    💳
+                  </div>
+                  <div>
+                    <p className="text-xs text-emerald-100 font-medium">Digital Wallet Balance</p>
+                    <p className="text-[11px] text-emerald-200">ID: 01712345678</p>
+                  </div>
+                </div>
+                <div className="bg-black/30 backdrop-blur-sm text-amber-300 text-xs px-2.5 py-1 rounded-xl flex items-center space-x-1 font-semibold">
+                  <span>★</span>
+                  <span>450 pts</span>
+                </div>
+              </div>
+
+              {/* Tap to Reveal / Hide Balance Button */}
+              <div 
+                onClick={() => setShowBalance(!showBalance)}
+                className="bg-white rounded-xl py-2.5 px-4 cursor-pointer inline-flex items-center space-x-3 shadow-md hover:bg-emerald-50 transition active:scale-95"
+              >
+                <div className="text-emerald-800 font-extrabold text-xl tracking-tight">
+                  {showBalance ? `৳ ${balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : '••••••••'}
+                </div>
+                <span className="text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-medium">
+                  {showBalance ? 'Hide' : 'Tap for Balance'}
+                </span>
+              </div>
+
+              <p className="text-[11px] text-emerald-100 mt-4 opacity-90">
+                Instant 24/7 Mobile Recharge, Send Money & Wallet Transfer
+              </p>
+            </div>
+
+            {/* 2. Quick Access Action Buttons */}
+            <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+              <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Quick Access</h2>
+              <div className="grid grid-cols-5 gap-2 text-center">
+                {/* Add Money */}
+                <button 
+                  onClick={() => setActiveModal('ADD_MONEY')}
+                  className="flex flex-col items-center group active:scale-95 transition"
+                >
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl shadow-sm group-hover:bg-emerald-200">
+                    ➕
+                  </div>
+                  <span className="text-[11px] font-semibold text-gray-700 mt-1.5">Add Money</span>
+                </button>
+
+                {/* Send Money */}
+                <button 
+                  onClick={() => setActiveModal('SEND_MONEY')}
+                  className="flex flex-col items-center group active:scale-95 transition"
+                >
+                  <div className="w-12 h-12 rounded-2xl bg-purple-100 text-purple-600 flex items-center justify-center text-xl shadow-sm group-hover:bg-purple-200">
+                    ↗️
+                  </div>
+                  <span className="text-[11px] font-semibold text-gray-700 mt-1.5">Send Money</span>
+                </button>
+
+                {/* Recent Transactions */}
+                <button 
+                  onClick={() => {
+                    const el = document.getElementById('recent-txns-section');
+                    el && el.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  className="flex flex-col items-center group active:scale-95 transition"
+                >
+                  <div className="w-12 h-12 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-xl shadow-sm group-hover:bg-indigo-200">
+                    📑
+                  </div>
+                  <span className="text-[11px] font-semibold text-gray-700 mt-1.5">Transactions</span>
+                </button>
+
+                {/* Recharge */}
+                <button 
+                  onClick={() => alert("Recharge operator selection!")}
+                  className="flex flex-col items-center group active:scale-95 transition"
+                >
+                  <div className="w-12 h-12 rounded-2xl bg-sky-100 text-sky-600 flex items-center justify-center text-xl shadow-sm group-hover:bg-sky-200">
+                    ⚡
+                  </div>
+                  <span className="text-[11px] font-semibold text-gray-700 mt-1.5">Recharge</span>
+                </button>
+
+                {/* Offers */}
+                <button 
+                  onClick={() => alert("Exclusive 50৳ Cashback Offers Available!")}
+                  className="flex flex-col items-center group active:scale-95 transition"
+                >
+                  <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center text-xl shadow-sm group-hover:bg-amber-200">
+                    🏷️
+                  </div>
+                  <span className="text-[11px] font-semibold text-gray-700 mt-1.5">Offers</span>
+                </button>
+              </div>
+            </div>
+
+            {/* 3. Send Money Quick Contacts */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-bold text-gray-700">Quick Send to Contact</h3>
+                <button 
+                  onClick={() => setActiveModal('SEND_MONEY')}
+                  className="text-xs text-purple-600 font-semibold hover:underline"
+                >
+                  Send Now →
+                </button>
+              </div>
+              <div className="flex space-x-3 overflow-x-auto pb-1">
+                {quickContacts.map(c => (
+                  <button 
+                    key={c.name}
+                    onClick={() => {
+                      setSendPhone(c.phone);
+                      setActiveModal('SEND_MONEY');
+                    }}
+                    className="flex items-center space-x-2 bg-white px-3 py-1.5 rounded-xl border border-gray-200 shadow-sm shrink-0 hover:border-purple-300"
+                  >
+                    <div className="w-6 h-6 rounded-full bg-purple-100 text-purple-700 font-bold text-xs flex items-center justify-center">
+                      {c.name[0]}
+                    </div>
+                    <div className="text-left">
+                      <p className="text-xs font-semibold text-gray-800 leading-tight">{c.name}</p>
+                      <p className="text-[10px] text-gray-400">...{c.phone.slice(-4)}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* 4. Recent Transactions Section */}
+            <div id="recent-txns-section" className="space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <h3 className="text-sm font-bold text-gray-800">Recent Transactions</h3>
+                  <span className="bg-emerald-100 text-emerald-800 text-[11px] font-bold px-2 py-0.5 rounded-full">
+                    {transactions.length}
+                  </span>
+                </div>
+              </div>
+
+              {/* In-Dashboard Filter Tabs */}
+              <div className="flex space-x-2">
+                {[
+                  { key: 'ALL', label: 'All Recent' },
+                  { key: 'INFLOW', label: 'Inflow (+)' },
+                  { key: 'OUTFLOW', label: 'Outflow (-)' },
+                ].map(tab => (
+                  <button
+                    key={tab.key}
+                    onClick={() => setFilter(tab.key)}
+                    className={`text-xs px-3 py-1 rounded-full font-medium transition ${
+                      filter === tab.key 
+                        ? 'bg-emerald-600 text-white shadow-sm' 
+                        : 'bg-white text-gray-600 border border-gray-200'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Transactions List */}
+              <div className="space-y-2">
+                {filteredTxns.length === 0 ? (
+                  <div className="bg-white p-6 rounded-2xl text-center border border-gray-100">
+                    <p className="text-sm text-gray-500 font-medium">No transactions found</p>
+                  </div>
+                ) : (
+                  filteredTxns.map(t => {
+                    const isInflow = t.type === "ADD_MONEY";
+                    return (
+                      <div 
+                        key={t.id}
+                        onClick={() => setSelectedTxn(t)}
+                        className="bg-white p-3.5 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between hover:bg-gray-50 cursor-pointer transition active:scale-[0.99]"
+                      >
+                        <div className="flex items-center space-x-3">
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg ${
+                            isInflow ? 'bg-emerald-100 text-emerald-600' : 'bg-purple-100 text-purple-600'
+                          }`}>
+                            {isInflow ? '📥' : '↗️'}
+                          </div>
+                          <div>
+                            <p className="text-xs font-bold text-gray-800">{t.title}</p>
+                            <p className="text-[11px] text-gray-500">{t.number}</p>
+                            <p className="text-[10px] text-gray-400">{t.time}</p>
+                          </div>
+                        </div>
+
+                        <div className="text-right">
+                          <p className={`text-sm font-extrabold ${isInflow ? 'text-emerald-600' : 'text-gray-800'}`}>
+                            {isInflow ? '+' : '-'}৳{t.amount.toFixed(2)}
+                          </p>
+                          <span className="text-[10px] font-bold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200">
+                            {t.status}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          </main>
+
+          {/* Modal: Add Money */}
+          {activeModal === 'ADD_MONEY' && (
+            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+              <div className="bg-white rounded-2xl w-full max-w-sm p-5 space-y-4">
+                <div className="flex justify-between items-center border-b pb-2">
+                  <h3 className="font-bold text-gray-800">Add Money to Wallet</h3>
+                  <button onClick={() => setActiveModal(null)} className="text-gray-400 font-bold text-lg">✕</button>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 font-medium">Select Channel</label>
+                  <div className="grid grid-cols-3 gap-2 mt-1">
+                    {['bKash', 'Nagad', 'Card'].map(ch => (
+                      <button 
+                        key={ch} 
+                        onClick={() => setAddChannel(ch)}
+                        className={`py-2 rounded-xl text-xs font-bold border ${addChannel === ch ? 'border-emerald-600 bg-emerald-50 text-emerald-800' : 'border-gray-200'}`}
+                      >
+                        {ch}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 font-medium">Amount (৳)</label>
+                  <input 
+                    type="number"
+                    value={addAmount}
+                    onChange={e => setAddAmount(e.target.value)}
+                    className="w-full mt-1 border border-gray-300 rounded-xl px-3 py-2 text-sm font-bold text-gray-800 focus:outline-emerald-600"
+                  />
+                </div>
+                <button 
+                  onClick={handleAddMoney}
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-xl font-bold text-sm shadow-md"
+                >
+                  Deposit ৳{addAmount}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Modal: Send Money */}
+          {activeModal === 'SEND_MONEY' && (
+            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+              <div className="bg-white rounded-2xl w-full max-w-sm p-5 space-y-4">
+                <div className="flex justify-between items-center border-b pb-2">
+                  <h3 className="font-bold text-gray-800">Send Money</h3>
+                  <button onClick={() => setActiveModal(null)} className="text-gray-400 font-bold text-lg">✕</button>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 font-medium">Recipient Phone</label>
+                  <input 
+                    type="text"
+                    value={sendPhone}
+                    onChange={e => setSendPhone(e.target.value)}
+                    className="w-full mt-1 border border-gray-300 rounded-xl px-3 py-2 text-sm font-semibold text-gray-800 focus:outline-purple-600"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 font-medium">Amount (৳)</label>
+                  <input 
+                    type="number"
+                    value={sendAmount}
+                    onChange={e => setSendAmount(e.target.value)}
+                    className="w-full mt-1 border border-gray-300 rounded-xl px-3 py-2 text-sm font-bold text-gray-800 focus:outline-purple-600"
+                  />
+                </div>
+                <button 
+                  onClick={handleSendMoney}
+                  className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-xl font-bold text-sm shadow-md"
+                >
+                  Confirm Send ৳{sendAmount}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Modal: Transaction Receipt */}
+          {selectedTxn && (
+            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+              <div className="bg-white rounded-2xl w-full max-w-sm p-5 space-y-4 text-center">
+                <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-2xl mx-auto">
+                  ✓
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-800 text-base">{selectedTxn.title}</h3>
+                  <p className="text-2xl font-black text-emerald-600 mt-1">৳{selectedTxn.amount.toFixed(2)}</p>
+                </div>
+                <div className="bg-gray-50 p-3 rounded-xl text-left space-y-1 text-xs">
+                  <div className="flex justify-between text-gray-600">
+                    <span>Transaction ID:</span>
+                    <span className="font-mono font-bold text-gray-800">{selectedTxn.trxId}</span>
+                  </div>
+                  <div className="flex justify-between text-gray-600">
+                    <span>Target Number:</span>
+                    <span className="font-semibold text-gray-800">{selectedTxn.number}</span>
+                  </div>
+                  <div className="flex justify-between text-gray-600">
+                    <span>Date & Time:</span>
+                    <span className="text-gray-800">{selectedTxn.time}</span>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setSelectedTxn(null)}
+                  className="w-full bg-gray-900 text-white py-2.5 rounded-xl font-bold text-sm"
+                >
+                  Close Receipt
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<PayFlexDashboard />);
+  </script>
+</body>
+</html>
